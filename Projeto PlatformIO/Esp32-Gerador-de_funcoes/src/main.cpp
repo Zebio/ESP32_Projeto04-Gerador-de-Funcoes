@@ -7,15 +7,26 @@
 #define touch1  27
 #define touch2  12
 
+/*---------------Variáveis Globais----------------*/
 
-double   resultado,
-         amplitude  = 1,
-         offset     = 0,
-         frequencia = 1,
-         grau=0;
+double  canal1, 
+        canal2,
+        amplitude  = 1,
+        offset     = 1.65,
+        frequencia = 0.1,
+        radianos   = 0;
 
-/*-----------Mapeamento de Hardware---------------*/
+/*---------------Constantes Globais----------------*/
+
+long double constante_DAC = 255/3.3;
+
+/*-----------Declaração de Funções---------------*/
+
 bool le_touch(int);
+long double seno(double,double,double);
+
+
+/*-----------Configuralções Iniciais-------------*/
 
 void setup() {
   Serial.begin(115200);
@@ -31,19 +42,22 @@ void loop() {
 */
 
 
-  grau=(grau+(frequencia*360));
-  if (grau>360)
-  {Serial.print("======================");
-    grau=0;
-  }
-  resultado = (offset+(amplitude * sin(grau*PI/180)));
-  Serial.print(grau);
-  Serial.print(":  ");
-  Serial.println(resultado);
-  delay(1000);
+  Serial.println(canal1);
+  dacWrite(dac1,canal1);
+  canal1=seno(offset,frequencia,amplitude)*(constante_DAC);
+  delay(1);
+  
 }
+
+/*-----------Implementação das Funções-------------*/
 
 bool le_touch(int touch)
 {
   return (touchRead(touch)<35);
+}
+
+long double seno(double offset, double frequencia,double amplitude)
+{
+  radianos = radianos + frequencia/1000;
+  return (offset + (amplitude * sin(radianos*2*PI)));
 }
