@@ -27,6 +27,7 @@ long double constante_DAC = 255/3.3;
 
 bool le_touch(int);
 long double seno(double,double,double,double &);
+long double dente_de_serra(double,double,double,double &);
 
 
 /*-----------Configuralções Iniciais-------------*/
@@ -49,7 +50,7 @@ void loop() {
 
   dacWrite(dac1,canal1);
   dacWrite(dac1,canal2);
-  canal1=seno(offset1,frequencia1,amplitude1,radianos1)*(constante_DAC);
+  canal1=dente_de_serra(offset1,frequencia1,amplitude1,radianos1)*(constante_DAC);
   canal2=seno(offset2,frequencia2,amplitude2,radianos2)*(constante_DAC);
   delay(1);
 }
@@ -65,4 +66,13 @@ long double seno(double offset, double frequencia,double amplitude,double &radia
 {
   radianos = radianos + frequencia/1000;
   return (offset + (amplitude * sin(radianos*2*PI)));
+}
+
+long double dente_de_serra(double offset, double frequencia,double amplitude,double &radianos)
+{
+  radianos = radianos + frequencia/1000;
+  if (radianos>1000)
+    radianos =0;
+
+  return offset - amplitude + 2*amplitude*radianos/1000;
 }
