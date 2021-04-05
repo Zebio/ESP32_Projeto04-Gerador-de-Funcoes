@@ -1,53 +1,54 @@
 #include <Arduino.h>
 #include <math.h>
+#include <LiquidCrystal.h>
+
 
 /*-----------Mapeamento de Hardware---------------*/
-#define dac1    25
-#define dac2    26
+#define dac1    26
+#define dac2    25
 #define touch1  27
 #define touch2  12
+#define lcd_rs  19
+#define lcd_e   23
+#define lcd_d4  18
+#define lcd_d5  17
+#define lcd_d6  16
+#define lcd_d7  15
+
+
+/*------Inicialização da biblioteca do display----*/
+LiquidCrystal lcd(lcd_rs, lcd_e, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
+
 
 /*---------------Variáveis Globais----------------*/
-
 double  canal1             ,canal2,
         amplitude1  = 1    ,amplitude2  = 1,
         offset1     = 1.65 ,offset2     = 1.65,
         frequencia1 = 0.1  ,frequencia2 = 0.1,
         radianos1   = 0    ,radianos2   = 0;
         
-        
-
-       
-
+      
 /*---------------Constantes Globais----------------*/
 
 long double constante_DAC = 255/3.3;
 
-/*-----------Declaração de Funções---------------*/
 
+/*-----------Declaração de Funções---------------*/
 bool le_touch(int);
 long double seno(double,double,double,double &);
 long double dente_de_serra(double,double,double,double &);
 
 
-/*-----------Configuralções Iniciais-------------*/
-
+/*------------Configurações Iniciais-------------*/
 void setup() {
   Serial.begin(115200);
-
+  lcd.begin(16, 2);
+  lcd.print("Gerador de Funcoes");
 }
 
+
+/*-----------------Loop Infinito------------------*/
 void loop() {
-  /*
-  Serial.print(le_touch(touch1));
-  Serial.print("  ");
-  Serial.println(le_touch(touch2));
-  delay(100);
-*/
-
-
-  //Serial.println(canal1);
-
   dacWrite(dac1,canal1);
   dacWrite(dac1,canal2);
   canal1=dente_de_serra(offset1,frequencia1,amplitude1,radianos1)*(constante_DAC);
@@ -55,8 +56,8 @@ void loop() {
   delay(1);
 }
 
-/*-----------Implementação das Funções-------------*/
 
+/*-----------Implementação das Funções-------------*/
 bool le_touch(int touch)
 {
   return (touchRead(touch)<35);
