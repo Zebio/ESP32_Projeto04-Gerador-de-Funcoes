@@ -17,9 +17,9 @@
 #define lcd_d6  16
 #define lcd_d7  15
 
-#define seno    1
-#define dente   2
-#define clock   3
+#define seno    0
+#define dente   1
+#define clock   2
 
 
 /*------Inicialização da biblioteca do display----*/
@@ -28,7 +28,7 @@ LiquidCrystal lcd(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
       
 /*---------------Constantes Globais----------------*/
 const long double constante_DAC = 255/3.3;
-const int tempo_ms=500;
+const int tempo_ms=400;
 const int teclado_touch[4]= {t_volta,t_enter,t_mais,t_menos};
 const int canal1=0;
 const int canal2=1;
@@ -51,11 +51,13 @@ int estado_menu_principal=canal1;
 
 /*-----------Declaração de Funções---------------*/
 void ajuste_canal(int);
+void lcd_ajusta_parametro(int,int);
 void lcd_imprime_canal_parametro(int,int);
 void lcd_print_main();
 bool le_touch();
 long double senoide(int);
 long double dente_de_serra(int);
+long double funcao_clock(int);
 
 
 /*------------Configurações Iniciais-------------*/
@@ -108,13 +110,95 @@ void ajuste_canal (int canal)
         if (parametro>4)
           parametro=0;
       }
+      if (botao_pressionado==t_enter)
+      {
+        lcd_ajusta_parametro(canal,parametro);
+        le_touch();
+      }
       lcd_imprime_canal_parametro(canal,parametro);
     }    
   }
 }
 
-void lcd_imprime_canal_parametro(int canal,int parametro)
+void lcd_ajusta_parametro(int canal,int parametro)
+{
+  lcd_imprime_canal_parametro(canal,parametro);
+  do
+  {
+    if(le_touch()&&(botao_pressionado==t_mais||botao_pressionado==t_menos))
+    {
+      bool flag=0;
+      if (botao_pressionado==t_mais)
+        flag=true;
+      switch (parametro)
+      {
+        case 0:
+          canal_out[canal]=!canal_out[canal];
+          break;
+        case 1:
+          if (flag)
+          {
+            onda[canal]--;
+            if (onda[canal]<0)
+              onda[canal]=2;
+          }
+          else
+          {
+            onda[canal]++;
+            if (onda[canal]>2)
+              onda[canal]=0;
+          }
+          break;
+        case 2:
+          if (flag)
+          {
+            amplitude[canal]=(amplitude[canal]+0.05);
+            if (amplitude[canal]>3.3)
+              amplitude[canal]=3.3;
+          }
+          else
+          {
+            amplitude[canal]=(amplitude[canal]-0.05);
+            if (amplitude[canal]<0)
+              amplitude[canal]=0;
+          }
+          break;
+        case 3:
+          if (flag)
+          {
+            offset[canal]=(offset[canal]+0.05);
+            if (offset[canal]>3.3)
+              offset[canal]=3.3;
+          }
+          else
+          {
+            offset[canal]=(offset[canal]-0.05);
+            if (offset[canal]<0)
+              offset[canal]=0;
+          }
+          break;
+          
+        case 4:
+          if (flag)
+          {
+            frequencia[canal]=(frequencia[canal]+1);
+            if (frequencia[canal]>10000)
+              frequencia[canal]=10000;
+          }
+          else
+          {
+            frequencia[canal]=(frequencia[canal]-1);
+            if (frequencia[canal]<1)
+              frequencia[canal]=1;
+          }
+          break;
+      }
+      lcd_imprime_canal_parametro(canal,parametro);
+    }
+  }while(botao_pressionado!=t_volta);
+}
 
+void lcd_imprime_canal_parametro(int canal,int parametro)
 {
   lcd.clear();
   lcd.print("CANAL");
@@ -147,12 +231,12 @@ void lcd_imprime_canal_parametro(int canal,int parametro)
     case 2:
       lcd.print("Offset:        V");
       lcd.setCursor(11,1);
-      lcd.print(offset[canal]);
+      lcd.print(amplitude[canal]);
     break;
     case 3:
       lcd.print("Amplitude:     V");
       lcd.setCursor(11,1);
-      lcd.print(amplitude[canal]);
+      lcd.print(offset[canal]);
     break;
     case 4:
       lcd.print("Freq:         Hz");
@@ -219,4 +303,15 @@ long double dente_de_serra(int canal)
     radianos[canal] =0;
 
   return offset[canal] - amplitude[canal] + 2*amplitude[canal]*radianos[canal]/1000;
+}
+
+long double funcao_clock(int canal)
+{
+  radianos[canal] = radianos[canal] + frequencia[canal]/1000;
+  if (radianos[canal]>1000)
+    radianos[canal] =0;
+  if (radianos[canal]<500)
+    return offset[canal]-amplitude[canal];
+  else 
+    return offset[canal]+amplitude[canal];
 }
