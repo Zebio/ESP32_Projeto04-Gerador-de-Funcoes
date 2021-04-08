@@ -17,9 +17,10 @@
 #define lcd_d6  16
 #define lcd_d7  15
 
-#define seno    0
-#define dente   1
-#define clock   2
+#define seno        0
+#define dente       1
+#define quadrada    2
+#define triangular  3
 
 
 /*------Inicialização da biblioteca do display----*/
@@ -28,7 +29,8 @@ LiquidCrystal lcd(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
       
 /*---------------Constantes Globais----------------*/
 const long double constante_DAC = 255/3.3;
-const int tempo_ms=400;
+const unsigned long tempo_ms=400;
+const unsigned long tempo_10_ms = 10;
 const int teclado_touch[4]= {t_volta,t_enter,t_mais,t_menos};
 const int canal1=0;
 const int canal2=1;
@@ -36,15 +38,15 @@ const int canal2=1;
 
 /*---------------Variáveis Globais----------------*/
 double  canal[2],
-        amplitude[2]  ={1,   1},
-        offset[2]     ={1.65,1.65},
+        amplitude[2]  ={0.5,0.5},
+        offset[2]     ={2.8,2.8},
         frequencia[2] ={1,   1},
         radianos[2]   ={0,   0};
 int     onda[2]       ={seno,seno};
 
 bool flag_touch;
-int tempo_touch;
-bool canal_out[2]={0,0};
+unsigned long tempo_touch;
+bool canal_out[2]={false,false};
 int botao_pressionado=0;
 int estado_menu_principal=canal1;
 
@@ -55,14 +57,16 @@ void lcd_ajusta_parametro(int,int);
 void lcd_imprime_canal_parametro(int,int);
 void lcd_print_main();
 bool le_touch();
+bool delay_10ms();
 long double senoide(int);
 long double dente_de_serra(int);
-long double funcao_clock(int);
+long double onda_quadrada(int);
+long double onda_triangular(int);
 
 
 /*------------Configurações Iniciais-------------*/
 void setup() {
-  //Serial.begin(115200);
+  Serial.begin(115200);
   lcd.begin(16, 4);
   lcd.setBacklight(HIGH);
   lcd_print_main();
@@ -71,14 +75,34 @@ void setup() {
 
 /*-----------------Loop Infinito------------------*/
 void loop() {
-  /*
-  dacWrite(dac1,canal[1]);
-  dacWrite(dac1,canal[2]);
-  canal[1]=dente_de_serra(canal1)*(constante_DAC);
-  canal[2]=senoide(canal2)*(constante_DAC);
-  
-  delay(1);
-  */
+  if(delay_10ms())
+  {
+    dacWrite(dac1,canal[canal1]);
+    dacWrite(dac2,canal[canal2]);
+    for(int canal_index=0;canal_index<2;canal_index++)
+    {
+      if (canal_out[canal_index])
+      {
+        switch (onda[canal_index])
+        {
+          case seno:
+            canal[canal_index]=senoide(canal_index)*(constante_DAC);
+            break;
+          case dente:
+            canal[canal_index]=dente_de_serra(canal_index)*(constante_DAC);
+            break;
+          case quadrada:
+            canal[canal_index]=onda_quadrada(canal_index)*(constante_DAC);
+            break;
+          case triangular:
+            canal[canal_index]=onda_triangular(canal_index)*(constante_DAC);
+            break;
+        }
+      }
+      else
+        canal[canal_index]=0;
+    }
+  }
   if (le_touch())
   {
     if (botao_pressionado==t_mais||botao_pressionado==t_menos)
@@ -140,12 +164,12 @@ void lcd_ajusta_parametro(int canal,int parametro)
           {
             onda[canal]--;
             if (onda[canal]<0)
-              onda[canal]=2;
+              onda[canal]=3;
           }
           else
           {
             onda[canal]++;
-            if (onda[canal]>2)
+            if (onda[canal]>3)
               onda[canal]=0;
           }
           break;
@@ -225,16 +249,18 @@ void lcd_imprime_canal_parametro(int canal,int parametro)
       lcd.print("    senoide");
     else if (onda[canal]==dente)
       lcd.print("      dente");
-    else if (onda[canal]==clock)
-      lcd.print("      clock");
+    else if (onda[canal]==quadrada)
+      lcd.print("   quadrada");
+    else if (onda[canal]==triangular)
+      lcd.print(" triangular");
     break;
     case 2:
-      lcd.print("Offset:        V");
+      lcd.print("Amplitude:        V");
       lcd.setCursor(11,1);
       lcd.print(amplitude[canal]);
     break;
     case 3:
-      lcd.print("Amplitude:     V");
+      lcd.print("Offset:     V");
       lcd.setCursor(11,1);
       lcd.print(offset[canal]);
     break;
@@ -290,28 +316,51 @@ bool le_touch(){
   return false;
 }
 
+bool delay_10ms()
+{
+  static unsigned long tempo_ms;
+  if ((millis()-tempo_ms)>=tempo_10_ms)
+  {
+    tempo_ms=millis();
+    return true;
+  }
+  else  
+    return false;
+}
+
 long double senoide(int canal)
 {
-  radianos[canal] = radianos[canal] + frequencia[canal]/1000;
+  radianos[canal] = radianos[canal] + frequencia[canal]/100;
   return (offset[canal] + (amplitude[canal] * sin(radianos[canal]*2*PI)));
 }
 
 long double dente_de_serra(int canal)
 {
-  radianos[canal] = radianos[canal] + frequencia[canal]/1000;
-  if (radianos[canal]>1000)
+  radianos[canal] = radianos[canal] + frequencia[canal]/100;
+  if (radianos[canal]>=1)
     radianos[canal] =0;
 
-  return offset[canal] - amplitude[canal] + 2*amplitude[canal]*radianos[canal]/1000;
+  return offset[canal] - amplitude[canal] + 2*amplitude[canal]*radianos[canal];
 }
 
-long double funcao_clock(int canal)
+long double onda_quadrada(int canal)
 {
-  radianos[canal] = radianos[canal] + frequencia[canal]/1000;
-  if (radianos[canal]>1000)
+  radianos[canal] = radianos[canal] + (frequencia[canal]/100);
+  if (radianos[canal]>=1)
     radianos[canal] =0;
-  if (radianos[canal]<500)
+  if (radianos[canal]<0.5)
     return offset[canal]-amplitude[canal];
   else 
     return offset[canal]+amplitude[canal];
+}
+
+long double onda_triangular(int canal)
+{
+  radianos[canal] = radianos[canal] + frequencia[canal]/100;
+  if (radianos[canal]>=1)
+    radianos[canal] =0;
+  if (radianos[canal]<=0.5)
+    return offset[canal] - amplitude[canal] + amplitude[canal]*radianos[canal]*2;
+  else 
+    return offset[canal] + amplitude[canal] - (amplitude[canal]*(radianos[canal]-0.5)*2);
 }
