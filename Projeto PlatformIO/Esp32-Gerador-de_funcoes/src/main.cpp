@@ -362,7 +362,7 @@ long double onda_triangular(int canal)
   if (radianos[canal]>=1)
     radianos[canal] =0;
   if (radianos[canal]<=0.5)
-    return offset[canal] - amplitude[canal] + amplitude[canal]*radianos[canal]*2;
+    return offset[canal] - amplitude[canal] + amplitude[canal]*radianos[canal]*4;
   else 
-    return offset[canal] + amplitude[canal] - (amplitude[canal]*(radianos[canal]-0.5)*2);
+    return offset[canal] + amplitude[canal] - (amplitude[canal]*(radianos[canal]-0.5)*4);
 }
