@@ -54,7 +54,7 @@ int estado_menu_principal=canal1;
 /*-----------Declaração de Funções---------------*/
 void ajuste_canal(int);
 void lcd_ajusta_parametro(int,int);
-void lcd_imprime_canal_parametro(int,int);
+void lcd_imprime_canal_parametro(int,int,bool);
 void lcd_print_main();
 bool le_touch();
 bool delay_10ms();
@@ -117,7 +117,7 @@ void loop() {
 void ajuste_canal (int canal)
 {
   int parametro=0;
-  lcd_imprime_canal_parametro(canal,parametro);
+  lcd_imprime_canal_parametro(canal,parametro,false);
   while(botao_pressionado!=t_volta)
   {
     if (le_touch())
@@ -137,16 +137,16 @@ void ajuste_canal (int canal)
       if (botao_pressionado==t_enter)
       {
         lcd_ajusta_parametro(canal,parametro);
-        le_touch();
+        botao_pressionado=0;
       }
-      lcd_imprime_canal_parametro(canal,parametro);
+      lcd_imprime_canal_parametro(canal,parametro,false);
     }    
   }
 }
 
 void lcd_ajusta_parametro(int canal,int parametro)
 {
-  lcd_imprime_canal_parametro(canal,parametro);
+  lcd_imprime_canal_parametro(canal,parametro,true);
   do
   {
     if(le_touch()&&(botao_pressionado==t_mais||botao_pressionado==t_menos))
@@ -217,12 +217,12 @@ void lcd_ajusta_parametro(int canal,int parametro)
           }
           break;
       }
-      lcd_imprime_canal_parametro(canal,parametro);
+      lcd_imprime_canal_parametro(canal,parametro,true);
     }
   }while(botao_pressionado!=t_volta);
 }
 
-void lcd_imprime_canal_parametro(int canal,int parametro)
+void lcd_imprime_canal_parametro(int canal,int parametro,bool ajuste)
 {
   lcd.clear();
   lcd.print("CANAL");
@@ -231,6 +231,8 @@ void lcd_imprime_canal_parametro(int canal,int parametro)
     lcd.print("1:");
   else 
     lcd.print("2:");
+  if (ajuste)
+      lcd.print(" +-");
   lcd.setCursor(0,1);
   switch (parametro)
   {
