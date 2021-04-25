@@ -2,7 +2,8 @@
 
 ### Demonstração
 
-Para mostrar o funcionamento do sistema foi criado um berve vídeo mostrando a interação do sistema com o usuário: [Vídeo de Demonstração](https://www.youtube.com/watch?v=BvxLr3R67Lg "Gerador de Funções com ESP32")
+Para mostrar o funcionamento do sistema foi criado um breve vídeo mostrando a interação do sistema com o usuário: 
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/BvxLr3R67Lg/0.jpg)](http://www.youtube.com/watch?v=BvxLr3R67Lg "Gerador de Funções com ESP32")
 
 ### Resumo
 
