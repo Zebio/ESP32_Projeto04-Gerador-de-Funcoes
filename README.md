@@ -20,7 +20,7 @@ de operação do ESP32, de modo que a onda resultante fique entre 3.3V e 0V. E f
 
 ### Como Usar
 
-Para clonar esse projeto e outros do platformIO, siga o guia passo-a-passo disponível no repositório: [Instrucoes-PlatformIO](https://github.com/Zebio/Instrucoes-PlatformIO)
+Para clonar projetos do PlatformIO como esse, siga o guia passo-a-passo disponível no repositório: [Instrucoes-PlatformIO](https://github.com/Zebio/Instrucoes-PlatformIO)
 
 ### Esquemático do Hardware 
 
